@@ -1,4 +1,5 @@
 requirements:
 - numpy
 - matplotlib
-
+- tkinter
+. tkcalendar
