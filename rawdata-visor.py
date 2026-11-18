@@ -2,16 +2,23 @@
 from logging.config import fileConfig
 import numpy as np
 
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
 import os
 from scipy import signal
 import time
-import datetime
+#import datetime
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-dirr = '/media/cportilla/HDD/mnt/share-1/Faraday/main_radar/rawdata/d2026230/'
+VARIABLE_PATH = '/media/cportilla/HDD/mnt/share-1/Faraday/main_radar/rawdata/d2026230/'
+VARIABLE_FECHA = '18/08/2026'
+VARIABLE_HORA = '00:00:00'
+VARIABLE_NUMERO_DE_BLOQUES = 214
 
+dirr = VARIABLE_PATH
 
 nprofiles= 128 #200
 nsamp=800 #980
@@ -30,7 +37,7 @@ for file in filepath:
 print('filepath[0]', filepath[0])
 
 # one file reading
-filepath = [filepath[147]]
+filepath = [filepath[88]]
 
 blockcount=0
 
@@ -53,7 +60,7 @@ for file1 in filepath:
     fsize=os.stat(dirr+file1).st_size
 
     #from the manual nblocks per file. Crucial for the moment
-    nblocks=214
+    nblocks=VARIABLE_NUMERO_DE_BLOQUES
 
     #print('nblocks', nblocks)
     for k in range(nblocks):#nblocks): #only read one block, acording time step
@@ -66,6 +73,16 @@ for file1 in filepath:
             version = np.fromfile(inputfile,np.int16,1,"") # int16 2 bytes version
             dataBlock = np.fromfile(inputfile,np.int32,1,"")
             utc = np.fromfile(inputfile,np.int32,1,"")
+            
+            utc_time = datetime.fromtimestamp(int(utc), timezone.utc)
+            peru_time = utc_time.astimezone(ZoneInfo("America/Lima"))
+
+            print("UTC:", utc_time)
+            print("Perú:", peru_time)
+            
+            #CONDICIONAL PARA LECTURA DE DATOS A PARTIR DE, PODEMOS USAR "pass"
+            
+            #print('utc',utc)
             miliSecond = np.fromfile(inputfile,np.int16,1,"")
             timeZone = np.fromfile(inputfile,np.int16,1,"")
             dstFlag = np.fromfile(inputfile,np.int16,1,"")
@@ -79,11 +96,11 @@ for file1 in filepath:
             size1LongHeader = np.fromfile(inputfile,np.int32,1,"")
 
             nSamples = np.fromfile(inputfile,np.int32,1,"")[0]
-            print('nSamples',nSamples)
+            #print('nSamples',nSamples)
             nProfiles = np.fromfile(inputfile,np.int32,1,"")[0]
-            print('nProfiles',nProfiles)
+            #print('nProfiles',nProfiles)
             nChannels = np.fromfile(inputfile,np.int32,1,"")[0]
-            print('nChannels',nChannels)
+            #print('nChannels',nChannels)
 
             #print("size1LongHeader", size1LongHeader[0])
             tmpSkip1 = np.fromfile(inputfile,np.int32,int(size1LongHeader[0]/4)-3-1,"") #4 for 3 parameters
@@ -215,11 +232,4 @@ for file1 in filepath:
 
     x=x+1
     inputfile.close()
-
-
-print()
-
-if SAVE:
-    outputfile.close()
-    outputfile_utc.close()
 
