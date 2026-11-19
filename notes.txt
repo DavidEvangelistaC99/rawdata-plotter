@@ -2,4 +2,9 @@ requirements:
 - numpy
 - matplotlib
 - tkinter
-. tkcalendar
+- tkcalendar
+
+
+
+notes:
+- GUI sets time in UTC
