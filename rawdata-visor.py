@@ -1,22 +1,45 @@
 
-from logging.config import fileConfig
+#from logging.config import fileConfig
 import numpy as np
 
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 import os
-from scipy import signal
-import time
+#from scipy import signal
+#import time
 #import datetime
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
+def convertTime(date, hour):
+
+    # Combine date and time
+    fecha_hora = f"{date} {hour}"
+
+    # Convert to UTC datetime
+    fecha_utc = datetime.strptime(fecha_hora, '%d/%m/%Y %H:%M:%S').replace(tzinfo=timezone.utc)
+
+    # Convert to Unix timestamp
+    timestamp = int(fecha_utc.timestamp())
+
+    #print(timestamp)
+    return timestamp
+
+
+
 VARIABLE_PATH = '/media/cportilla/HDD/mnt/share-1/Faraday/main_radar/rawdata/d2026230/'
 VARIABLE_FECHA = '18/08/2026'
-VARIABLE_HORA = '00:00:00'
+#HOURS IN LT
+VARIABLE_HORA = '20:12:05'
 VARIABLE_NUMERO_DE_BLOQUES = 214
+
+utc_defined = convertTime(VARIABLE_FECHA, VARIABLE_HORA)
+#add 5 hours for local time
+lt_defined = utc_defined+18000
+
+#print('lt_defined',lt_defined)
 
 dirr = VARIABLE_PATH
 
@@ -31,13 +54,13 @@ filepath=os.listdir(dirr) #Get the list of all files in directory
 
 filepath=sorted(filepath) #Sort the files in ascending numerical order
 
-for file in filepath:
-    print(file)
+#for file in filepath:
+#    print(file)
 
-print('filepath[0]', filepath[0])
+#print('filepath[0]', filepath[0])
 
 # one file reading
-filepath = [filepath[88]]
+filepath = [filepath[135]]
 
 blockcount=0
 
@@ -46,17 +69,17 @@ fileread=True
 
 for file1 in filepath:
  print(file1)
- print(True)
+ #print(True)
 
  #filecount=filecount+1
  
  
  if fileread==True and file1[-1]=='r': #and file1[:8]==dirr_:
-    print("HOLAAAA")
-    print("file1")
-    print(file1)
+    #print("HOLAAAA")
+    #print("file1")
+    #print(file1)
     inputfile = open(dirr+file1,"rb")
-    print('inputfile',inputfile)
+    #print('inputfile',inputfile)
     fsize=os.stat(dirr+file1).st_size
 
     #from the manual nblocks per file. Crucial for the moment
@@ -67,6 +90,7 @@ for file1 in filepath:
         #iavg=iavg+1
         if k==0:
             blockcount=blockcount+1
+            print('blockcount',blockcount)
             #hdr=hsize# 244 #492 #First header???
             nSize = np.fromfile(inputfile,np.int32,1,"") # int32 4 bytes
             #print(nSize)
@@ -74,11 +98,12 @@ for file1 in filepath:
             dataBlock = np.fromfile(inputfile,np.int32,1,"")
             utc = np.fromfile(inputfile,np.int32,1,"")
             
-            utc_time = datetime.fromtimestamp(int(utc), timezone.utc)
-            peru_time = utc_time.astimezone(ZoneInfo("America/Lima"))
 
-            print("UTC:", utc_time)
-            print("Perú:", peru_time)
+            
+            #print('utc', utc[0])
+
+            #print("UTC:", utc_time)
+            #print("Perú:", peru_time)
             
             #CONDICIONAL PARA LECTURA DE DATOS A PARTIR DE, PODEMOS USAR "pass"
             
@@ -122,9 +147,14 @@ for file1 in filepath:
             #print('nDataBlock', sizeBlock )
 
             tmpSkip3 = np.fromfile(inputfile,np.int32,int(size3LongHeader[0]/4)-2-1,"")
-        
-        
 
+            if utc.size > 0:
+                #print('utc', utc[0])
+                utc_time = datetime.fromtimestamp(utc[0], timezone.utc)
+                peru_time = utc_time.astimezone(ZoneInfo("America/Lima"))
+                print("UTC:", utc_time)
+                print("Perú:", peru_time)
+        
         
         else:
             blockcount=blockcount+1
@@ -140,96 +170,80 @@ for file1 in filepath:
             dstFlag = np.fromfile(inputfile,np.int16,1,"")
             errorCount = np.fromfile(inputfile,np.int32,1,"")
 
-            print("utc: ",datetime.datetime.utcfromtimestamp(utc[0]))
-        #exit(1)
-         #print("utc: ",datetime.datetime.utcfromtimestamp(utc))
-         #print("UTC: ", datetime.datetime.utcfromtimestamp(UTC))
-        #tempheader=np.fromfile(inputfile,np.int32,int(hdr/4),"") #Skip header
-        #print("tempheader: ", np.fromfile(inputfile,np.int32,int(hdr/4),""))
-        #print("UTC: ", datetime.datetime.utcfromtimestamp(self.utc))
-        '''
-        print("nSize: ", nSize)
-        print("version: ", version)
-        print("dataBlock: ", dataBlock)
-        print("utc: ", utc)
-        print("miliSecond: ", miliSecond)
-        print("timeZone: ", timeZone)
-        print("dstFlag: ", dstFlag)
-        print("errorCount: ", errorCount)
-        '''
+            #print("utc: ",datetime.datetime.utcfromtimestamp(utc[0]))
 
-        
-        
+            #print(utc.shape)
+            #print(utc)
+            if utc.size > 0:
+                #print('utc', utc[0])
+                utc_time = datetime.fromtimestamp(utc[0], timezone.utc)
+                peru_time = utc_time.astimezone(ZoneInfo("America/Lima"))
+                print("UTC:", utc_time)
+                print("Perú:", peru_time)
 
-        
-
-        #blockdata=np.fromfile(inputfile,np.int16,2*nsamp*nprofiles*nreceivers,"")
         blockdata=np.fromfile(inputfile,np.int16, 2*nSamples*nProfiles*nChannels,"") # *2 components I/Q and int16 for complete entire block
-        #print(blockdata.shape)
-        #blockdata = np.fromfile(inputfile,np.int16,int(sizeBlock[0]/2),"")
-        #print('blockdata.shape', blockdata.shape)
 
-        r=blockdata[0::2]#real
-        #print('r.shape',r.shape)
-        #print(r)
-        #print('r.shape',r.shape)
-        i=blockdata[1::2]#imag
-        #print('i.shape',i.shape)
-        complex_samp=r+1j*i #complex
-        channelList = np.arange(0,nChannels,1)
-        print('channelList',channelList)
-
-        complex_samp1=complex_samp[0::nChannels] #nreceivers] #Channel 0
-        complex_samp2=complex_samp[1::nChannels] #nreceivers] #Channel 1
-        #complex_samp3=complex_samp[2::nChannels]
-        #complex_samp4=complex_samp[3::nChannels]
-
-        #print(complex_samp1.shape)
-        #print(complex_samp2.shape)
-
-        #tempsamp1=np.reshape(complex_samp1,(nprofiles,nsamp))
-        #tempsamp2=np.reshape(complex_samp2,(nprofiles,nsamp))
-
-        #ch0
-        tempsamp1=np.reshape(complex_samp1,(nProfiles,nSamples))
-        #ch1
-        tempsamp2=np.reshape(complex_samp2,(nProfiles,nSamples))
-        #ch2
-        #tempsamp3=np.reshape(complex_samp3,(nProfiles,nSamples))
-        #ch3
-        #tempsamp4=np.reshape(complex_samp4,(nProfiles,nSamples))
-
-        # Combinar los canales
-        #temp = np.stack([tempsamp1, tempsamp2, tempsamp3, tempsamp4], axis=0)
-        temp = np.stack([tempsamp1, tempsamp2], axis=0)
-        print('temp.shape',temp.shape)
-
-        
-        for j in range(nProfiles):
-            print("HIIII")
-            print('temp.shape', temp.shape)
+        #if utc is not None:
+        if utc.size > 0:
+            if utc[0]-lt_defined>=0:
+                print("Pass")
+                #print("HOLAAAAA")
             
-            t = [i for i in range(nSamples)]
-            plt.plot(t,np.real(temp[0,j,:]))
-            plt.plot(t,np.imag(temp[0,j,:]))
-            plt.show()
+                #blockdata=np.fromfile(inputfile,np.int16,2*nsamp*nprofiles*nreceivers,"")
+                
+                #print(blockdata.shape)
+                #blockdata = np.fromfile(inputfile,np.int16,int(sizeBlock[0]/2),"")
+                #print('blockdata.shape', blockdata.shape)
+
+                r=blockdata[0::2]#real
+                #print('r.shape',r.shape)
+                #print(r)
+                #print('r.shape',r.shape)
+                i=blockdata[1::2]#imag
+                #print('i.shape',i.shape)
+                complex_samp=r+1j*i #complex
+                channelList = np.arange(0,nChannels,1)
+                #print('channelList',channelList)
+
+                complex_samp1=complex_samp[0::nChannels] #nreceivers] #Channel 0
+                complex_samp2=complex_samp[1::nChannels] #nreceivers] #Channel 1
+                #complex_samp3=complex_samp[2::nChannels]
+                #complex_samp4=complex_samp[3::nChannels]
+
+                #print(complex_samp1.shape)
+                #print(complex_samp2.shape)
+
+                #tempsamp1=np.reshape(complex_samp1,(nprofiles,nsamp))
+                #tempsamp2=np.reshape(complex_samp2,(nprofiles,nsamp))
+
+                #ch0
+                tempsamp1=np.reshape(complex_samp1,(nProfiles,nSamples))
+                #ch1
+                tempsamp2=np.reshape(complex_samp2,(nProfiles,nSamples))
+                #ch2
+                #tempsamp3=np.reshape(complex_samp3,(nProfiles,nSamples))
+                #ch3
+                #tempsamp4=np.reshape(complex_samp4,(nProfiles,nSamples))
+
+                # Combinar los canales
+                #temp = np.stack([tempsamp1, tempsamp2, tempsamp3, tempsamp4], axis=0)
+                temp = np.stack([tempsamp1, tempsamp2], axis=0)
+                #print('temp.shape',temp.shape)
+
+                
+                for j in range(nProfiles):
+                    #j=j+1
+                    print("Profile: ",j+1)
+                    #print("HIIII")
+                    #print('temp.shape', temp.shape)
+                    
+                    t = [i for i in range(nSamples)]
+                    plt.plot(t,np.real(temp[0,j,:]))
+                    plt.plot(t,np.imag(temp[0,j,:]))
+                    plt.show()
+                    plt.close()
 
 
-        #converting array in (nCh,nProf,nHeights)
-
-        #print('tempsamp1',tempsamp1)
-        #print('tempsamp1.shape',tempsamp1.shape)
-        #print('tempsamp2.shape',tempsamp2.shape)
-
-        #select profiles and heights, review of the manual
-        #tempsamp1 = tempsamp1[0:128,0:800]
-        #tempsamp2 = tempsamp2[0:128,0:800]
-
-        '''print('tempsamp1[profile 1,last]',tempsamp1[1,:])
-
-        print('tempsamp1.shape',tempsamp1.shape)
-        print('tempsamp2.shape',tempsamp2.shape)'''
-
-    x=x+1
+    #x=x+1
     inputfile.close()
 
