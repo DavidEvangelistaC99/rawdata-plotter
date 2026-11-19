@@ -3,26 +3,72 @@ from tkinter import filedialog
 from tkcalendar import Calendar
 from datetime import datetime, time, timezone
 
+import numpy as np
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+#from rawdata-visor import 
+
 root = tk.Tk()
 root.title("Radar Data Viewer")
 root.geometry("500x750")
 
+# Main layout
+controls_frame = tk.Frame(root)
+controls_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10)
+
+plot_frame = tk.Frame(root)
+plot_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
 selected_datetime = None
 selected_directory = None
 selected_nBlocks = None
+
+def plot_signal():
+
+    # Generate sinusoidal signal
+    t = np.linspace(0, 2*np.pi, 1000)
+
+    frequency = 2
+    signal = np.sin(frequency * t)
+
+    # Create figure
+    fig = Figure(figsize=(10, 6), dpi=100)
+
+    ax = fig.add_subplot(111)
+
+    ax.plot(t, signal)
+
+    ax.set_title("Reference Sinusoidal Signal")
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Amplitude")
+
+    ax.grid(True)
+
+    fig.tight_layout()
+
+    # Embed plot in Tkinter
+    canvas = FigureCanvasTkAgg(fig, master=plot_frame)
+
+    canvas.draw()
+
+    canvas.get_tk_widget().pack(
+        fill=tk.BOTH,
+        expand=True
+    )
 
 # -----------------------------
 # DATE SELECTOR
 # -----------------------------
 
 tk.Label(
-    root,
+    controls_frame,
     text="Select acquisition date",
     font=("Arial", 12, "bold")
 ).pack(pady=10)
 
 calendar = Calendar(
-    root,
+    controls_frame,
     selectmode="day",
     year=2026,
     month=11,
@@ -38,12 +84,12 @@ calendar.pack(pady=10)
 # -----------------------------
 
 tk.Label(
-    root,
+    controls_frame,
     text="Select acquisition time (UTC)",
     font=("Arial", 12, "bold")
 ).pack(pady=10)
 
-time_frame = tk.Frame(root)
+time_frame = tk.Frame(controls_frame)
 time_frame.pack(pady=10)
 
 # Hours
@@ -94,12 +140,12 @@ second_spin.grid(row=1, column=2, padx=10)
 # -----------------------------
 
 tk.Label(
-    root,
+    controls_frame,
     text="Select raw data directory",
     font=("Arial", 12, "bold")
 ).pack(pady=15)
 
-directory_frame = tk.Frame(root)
+directory_frame = tk.Frame(controls_frame)
 directory_frame.pack(pady=5)
 
 directory_entry = tk.Entry(
@@ -139,13 +185,13 @@ browse_button.pack(side=tk.LEFT)
 # -----------------------------
 
 tk.Label(
-    root,
+    controls_frame,
     text="Number of blocks (nBlocks)",
     font=("Arial", 12, "bold")
 ).pack(pady=15)
 
 nblocks_entry = tk.Entry(
-    root,
+    controls_frame,
     width=15,
     justify="center"
 )
@@ -207,13 +253,16 @@ def get_datetime():
 
     print("=========================================\n")
 
+    #aqui se genera la grafica
+    plot_signal()
+
 
 # -----------------------------
 # CONFIRM BUTTON
 # -----------------------------
 
 button = tk.Button(
-    root,
+    controls_frame,
     text="Confirm configuration",
     command=get_datetime,
     font=("Arial", 11, "bold")
@@ -222,4 +271,6 @@ button = tk.Button(
 button.pack(pady=25)
 
 
+
+#controls_frame.mainloop()
 root.mainloop()
