@@ -154,19 +154,31 @@ def run_continuous_viewer(
         variable_path, variable_fecha, variable_hora, num_bloques, num_file
     )
 
+    loaded_blocks = []
+    block_index = -1
     current_block = None
     current_profile = -1
-    finished_all = False
+    #finished_all = False
 
     def load_next_block():
-        nonlocal current_block, current_profile, finished_all
+        nonlocal loaded_blocks, block_index, current_block, current_profile
+
+        # Si ya cargamos un bloque siguiente antes (tras retroceder), lo reutilizamos
+        if block_index + 1 < len(loaded_blocks):
+            block_index += 1
+            current_block = loaded_blocks[block_index]
+            current_profile = 0
+            return True
+
+        # Si no, pedimos el siguiente bloque válido al generador
         try:
-            current_block = next(block_gen)
+            new_block = next(block_gen)
+            loaded_blocks.append(new_block)
+            block_index = len(loaded_blocks) - 1
+            current_block = new_block
             current_profile = 0
             return True
         except StopIteration:
-            finished_all = True
-            current_block = None
             return False
 
     # Una sola ventana principal para toda la sesión
@@ -178,11 +190,17 @@ def run_continuous_viewer(
     )
     info_label.pack(pady=(6, 0))
 
-    fig = Figure(figsize=(9, 5), dpi=100)
-    ax = fig.add_subplot(111)
+    fig = Figure(figsize=(9, 6), dpi=100)
+    ax0, ax1 = fig.subplots(2, 1, sharex=True)
 
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    def update_button_states():
+        at_very_start = (current_block is None) or (
+            block_index == 0 and current_profile <= 0
+        )
+        prev_button.config(state=tk.DISABLED if at_very_start else tk.NORMAL)
 
     def render_current_profile():
         temp = current_block["temp"]
@@ -192,58 +210,97 @@ def run_continuous_viewer(
         peru_time = current_block["peru_time"]
 
         t = np.arange(n_samples)
-        ax.clear()
-        ax.plot(t, np.real(temp[0, current_profile, :]), label="Real")
-        ax.plot(t, np.imag(temp[0, current_profile, :]), label="Imaginary")
 
-        ax.set_title(
+        ax0.clear()
+        ax1.clear()
+
+        # Canal 0
+        ax0.plot(t, np.real(temp[0, current_profile, :]), color='r', label="I",linewidth=.75)
+        ax0.plot(t, np.imag(temp[0, current_profile, :]), color='black', label="Q",linewidth=.75)
+        ax0.set_title(
             f"Bloque {blockcount} ({peru_time.strftime('%H:%M:%S')} PE) | "
-            f"Perfil {current_profile + 1}/{n_profiles}"
+            f"Perfil {current_profile + 1}/{n_profiles} — Canal 0 & Canal 1"
         )
-        ax.set_xlabel("Samples")
-        ax.set_ylabel("Amplitude")
-        #ax.set_xlim([xmin, xmax])
-        ax.set_ylim([-1, 1])
-        ax.legend()
-        ax.grid()
+        ax0.set_ylabel("CH 0 (Amplitude normalized)")
+        ax0.set_xlim([0.0,n_samples])
+        ax0.set_ylim([-1.5, 1.5])
+        ax0.legend(loc="upper right")
+        ax0.grid(True, linestyle="--", color="#8ab4f8", alpha=0.3)
+
+
+        # Canal 1
+        ax1.plot(t, np.real(temp[1, current_profile, :]), color='r',label="I",linewidth=.75)
+        ax1.plot(t, np.imag(temp[1, current_profile, :]), color='black', label="Q",linewidth=.75)
+        ax1.set_xlabel(" Heights (Samples)")
+        ax1.set_ylabel("CH 1 (Amplitude normalized)")
+        ax1.set_xlim([0.0,n_samples])
+        ax1.set_ylim([-1.5, 1.5])
+        ax1.legend(loc="upper right")
+        ax1.grid(True, linestyle="--", color="#8ab4f8", alpha=0.3)
 
         fig.tight_layout()
         canvas.draw()
         info_label.config(
             text=f"Bloque {blockcount} — Perfil {current_profile + 1} de {n_profiles}"
         )
+        update_button_states()
 
     def show_next_profile():
         nonlocal current_profile
 
-        if finished_all:
-            return
-
-        # Primer clic o avance normal dentro del bloque actual
         if current_block is None:
             if not load_next_block():
-                ax.clear()
-                ax.set_title("No hay más bloques disponibles")
+                ax0.clear()
+                ax1.clear()
+                ax0.set_title("No hay más bloques disponibles")
                 canvas.draw()
                 next_button.config(state=tk.DISABLED, text="No more blocks")
                 info_label.config(text="Fin de bloques. Cierra la ventana para salir.")
+                update_button_states()
                 return
         else:
             current_profile += 1
-            # Si se acabó el bloque actual, saltamos automáticamente al siguiente bloque
             if current_profile >= current_block["nProfiles"]:
                 if not load_next_block():
-                    ax.clear()
-                    ax.set_title("Todos los bloques y perfiles completados")
+                    ax0.clear()
+                    ax1.clear()
+                    ax0.set_title("Todos los bloques y perfiles completados")
                     canvas.draw()
                     next_button.config(state=tk.DISABLED, text="Completed")
                     info_label.config(
                         text="Fin de todos los bloques. Cierra la ventana para salir."
                     )
+                    update_button_states()
                     return
 
         print(
             f"Mostrando Bloque {current_block['blockcount']} - "
+            f"Perfil {current_profile + 1}/{current_block['nProfiles']}"
+        )
+        render_current_profile()
+    
+    def show_previous_profile():
+        nonlocal block_index, current_block, current_profile
+
+        if current_block is None:
+            return
+
+        # Reactivamos el botón Next si antes habíamos llegado al final
+        next_button.config(state=tk.NORMAL, text="Next profile")
+
+        if current_profile > 0:
+            current_profile -= 1
+        elif block_index > 0:
+            block_index -= 1
+            current_block = loaded_blocks[block_index]
+            current_profile = current_block["nProfiles"] - 1
+        else:
+            # Ya estamos en el primer perfil del primer bloque
+            update_button_states()
+            return
+
+        print(
+            f"Retrocediendo a Bloque {current_block['blockcount']} - "
             f"Perfil {current_profile + 1}/{current_block['nProfiles']}"
         )
         render_current_profile()
@@ -254,30 +311,42 @@ def run_continuous_viewer(
 
     root.protocol("WM_DELETE_WINDOW", on_close)
 
+    button_frame = tk.Frame(root)
+    button_frame.pack(pady=8)
+
+    prev_button = tk.Button(
+        button_frame,
+        text="Previous profile",
+        command=show_previous_profile,
+        font=("Arial", 12),
+        state=tk.DISABLED,
+    )
+    prev_button.pack(side=tk.LEFT, padx=6)
+
     next_button = tk.Button(
-        root,
+        button_frame,
         text="Next profile",
         command=show_next_profile,
         font=("Arial", 12),
     )
-    next_button.pack(pady=8)
+    next_button.pack(side=tk.LEFT, padx=6)
 
-    # Opcional: mostrar el perfil 1 del primer bloque automáticamente al abrir
+    # Mostrar el perfil 1 del primer bloque automáticamente al abrir
     show_next_profile()
 
     root.mainloop()
 
 
 if __name__ == "__main__":
-    #VARIABLE_PATH = "/media/cportilla/HDD/mnt/share-1/Faraday/main_radar/rawdata/d2026230/"
+    VARIABLE_PATH = "/media/cportilla/HDD/mnt/share-1/Faraday/main_radar/rawdata/d2026230/"
     
-    VARIABLE_PATH = '/media/cportilla/HDD/DAVID-OP/data-sevag/7/d2021301/'
-    #VARIABLE_FECHA = "18/08/2026"
-    VARIABLE_FECHA = '28/10/2021'
+    #VARIABLE_PATH = '/media/cportilla/HDD/DAVID-OP/data-sevag/7/d2021301/'
+    VARIABLE_FECHA = "18/08/2026"
+    #VARIABLE_FECHA = '01/01/2000'
     VARIABLE_HORA = "00:00:00"
-    #VARIABLE_NUMERO_DE_BLOQUES = 214
-    VARIABLE_NUMERO_DE_BLOQUES = 50
-    VARIABLE_NUMERO_DE_FILE = 1
+    VARIABLE_NUMERO_DE_BLOQUES = 214
+    #VARIABLE_NUMERO_DE_BLOQUES = 50
+    VARIABLE_NUMERO_DE_FILE = 135
 
     run_continuous_viewer(
         VARIABLE_PATH,
