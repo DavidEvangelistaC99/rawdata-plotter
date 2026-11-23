@@ -8,3 +8,4 @@ requirements:
 
 notes:
 - GUI sets time in UTC
+- Need to specify path, date and block per file

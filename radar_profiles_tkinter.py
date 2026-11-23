@@ -16,7 +16,7 @@ def convertTime(date, hour):
     return int(fecha_utc.timestamp())
 
 
-def iter_valid_blocks(variable_path, variable_fecha, variable_hora, num_bloques):
+def iter_valid_blocks(variable_path, variable_fecha, variable_hora, num_bloques, num_file):
     """Genera bloques válidos (temp, utc_timestamp, block_idx) de forma perezosa."""
     utc_defined = convertTime(variable_fecha, variable_hora)
     lt_defined = utc_defined + 18000
@@ -25,7 +25,7 @@ def iter_valid_blocks(variable_path, variable_fecha, variable_hora, num_bloques)
     filepath = sorted(os.listdir(dirr))
 
     # Misma selección de archivo que tenías; si quieres recorrer más archivos, ajusta aquí
-    filepath = [filepath[135]]
+    filepath = [filepath[num_file]]
 
     blockcount = 0
 
@@ -148,10 +148,10 @@ def iter_valid_blocks(variable_path, variable_fecha, variable_hora, num_bloques)
 
 
 def run_continuous_viewer(
-    variable_path, variable_fecha, variable_hora, num_bloques
+    variable_path, variable_fecha, variable_hora, num_bloques, num_file
 ):
     block_gen = iter_valid_blocks(
-        variable_path, variable_fecha, variable_hora, num_bloques
+        variable_path, variable_fecha, variable_hora, num_bloques, num_file
     )
 
     current_block = None
@@ -269,14 +269,20 @@ def run_continuous_viewer(
 
 
 if __name__ == "__main__":
-    VARIABLE_PATH = "/media/cportilla/HDD/mnt/share-1/Faraday/main_radar/rawdata/d2026230/"
-    VARIABLE_FECHA = "18/08/2026"
-    VARIABLE_HORA = "20:00:00"
-    VARIABLE_NUMERO_DE_BLOQUES = 214
+    #VARIABLE_PATH = "/media/cportilla/HDD/mnt/share-1/Faraday/main_radar/rawdata/d2026230/"
+    
+    VARIABLE_PATH = '/media/cportilla/HDD/DAVID-OP/data-sevag/7/d2021301/'
+    #VARIABLE_FECHA = "18/08/2026"
+    VARIABLE_FECHA = '28/10/2021'
+    VARIABLE_HORA = "00:00:00"
+    #VARIABLE_NUMERO_DE_BLOQUES = 214
+    VARIABLE_NUMERO_DE_BLOQUES = 50
+    VARIABLE_NUMERO_DE_FILE = 1
 
     run_continuous_viewer(
         VARIABLE_PATH,
         VARIABLE_FECHA,
         VARIABLE_HORA,
         VARIABLE_NUMERO_DE_BLOQUES,
+        VARIABLE_NUMERO_DE_FILE
     )
