@@ -231,9 +231,9 @@ def get_block(VARIABLE_PATH, VARIABLE_FECHA, VARIABLE_HORA, VARIABLE_NUMERO_DE_B
 
                         print('temp.shape',temp.shape)
 
-                        return temp[0,0,:]
+                        #return temp[0,0,:]
                             
-                        '''for j in range(nProfiles):
+                        for j in range(nProfiles):
                             #j=j+1
                             print("Profile: ",j+1)
                             #print("HIIII")
@@ -243,7 +243,7 @@ def get_block(VARIABLE_PATH, VARIABLE_FECHA, VARIABLE_HORA, VARIABLE_NUMERO_DE_B
                             plt.plot(t,np.real(temp[0,j,:]))
                             plt.plot(t,np.imag(temp[0,j,:]))
                             plt.show()
-                            plt.close()'''
+                            plt.close()
 
 
             #x=x+1
@@ -254,6 +254,7 @@ def get_block(VARIABLE_PATH, VARIABLE_FECHA, VARIABLE_HORA, VARIABLE_NUMERO_DE_B
 
 # Example
 if __name__ == "__main__":
+
     VARIABLE_PATH = '/media/cportilla/HDD/mnt/share-1/Faraday/main_radar/rawdata/d2026230/'
     VARIABLE_FECHA = '18/08/2026'
     VARIABLE_HORA = '20:13:00'
@@ -267,15 +268,3 @@ if __name__ == "__main__":
     plt.plot(t,np.imag(block))
     plt.show()
     plt.close()
-
-    '''for j in range(140):
-        #j=j+1
-        print("Profile: ",j+1)
-        #print("HIIII")
-        #print('temp.shape', temp.shape)
-        
-        t = [i for i in range(990)]
-        plt.plot(t,np.real(block[0,j,:]))
-        plt.plot(t,np.imag(block[0,j,:]))
-        plt.show()
-        plt.close()'''
