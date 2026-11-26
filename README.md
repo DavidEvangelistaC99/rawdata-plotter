@@ -24,7 +24,7 @@ The visualization tool can be launched by executing `radar_profiles_front.py`, w
 </p>
 
 <p align="center">
-  <em>Raw data plotter in Linux OS</em>
+  <em>Raw data plot corresponding LP/DP Faraday experiment</em>
 </p>
 
 ## Repository Structure
