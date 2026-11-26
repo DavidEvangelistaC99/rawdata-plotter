@@ -1,4 +1,6 @@
-# Overview
+# Raw Data Plotter
+
+## Overview
 
 This repository provides a tool for generating and visualizing raw data profiles acquired during different experiments at the Jicamarca Radio Observatory (JRO). The data are stored in `.r` files, a custom binary format that contains both metadata and experimental data collected by Jicamarca's radar systems. 
 Although a raw data reader and visualization tool already exists, it is currently limited to Windows operating systems. This project aims to overcome that limitation by providing a cross-platform solution, initially focused on Linux, which is the primary operating system used for experiment development and data processing at JRO. Ultimately, the goal is to make the tool compatible with different operating systems.
