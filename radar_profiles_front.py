@@ -10,7 +10,7 @@ from datetime import datetime
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from radar_profiles_tkinter import iter_valid_blocks
+from radar_profiles_back import iter_valid_blocks
 
 
 def run_continuous_viewer():
