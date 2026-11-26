@@ -19,6 +19,14 @@ The visualization tool can be launched by executing `radar_profiles_front.py`, w
 - **Number of blocks:** number of data blocks to be processed.
 - **File number:** specific file number to be loaded.
 
+<p align="center">
+  <img src="images/rawdata-plotter.png" width="900">
+</p>
+
+<p align="center">
+  <em>Raw data plotter in Linux OS</em>
+</p>
+
 ## Repository Structure
 
 - `legacy/`: early exploratory scripts and development drafts.
